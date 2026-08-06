@@ -59,6 +59,9 @@ fun SettingsScreen(
     onUpdateCloudCrashReport: (Boolean) -> Unit,
     onUpdateRootModeEnabled: (Boolean) -> Unit,
     onUpdateSuCommandEnabled: (Boolean) -> Unit,
+    onUpdateRemoteControlEnabled: (Boolean) -> Unit,
+    onUpdateServerPort: (Int) -> Unit,
+    onUpdateServerToken: (String) -> Unit,
     onSelectProvider: (ApiProvider) -> Unit,
     shizukuAvailable: Boolean,
     shizukuPrivilegeLevel: String = "ADB", // "ADB", "ROOT", "NONE"
@@ -74,6 +77,9 @@ fun SettingsScreen(
     var showOverlayHelpDialog by remember { mutableStateOf(false) }
     var showRootModeWarningDialog by remember { mutableStateOf(false) }
     var showSuCommandWarningDialog by remember { mutableStateOf(false) }
+    var showRemoteControlWarningDialog by remember { mutableStateOf(false) }
+    var showServerPortDialog by remember { mutableStateOf(false) }
+    var showServerTokenDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -394,6 +400,100 @@ fun SettingsScreen(
             )
         }
 
+        // 远程控制（受控模式）分组
+        item {
+            SettingsSection(title = "远程控制")
+        }
+
+        // 远程控制总开关
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.backgroundCard)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (settings.remoteControlEnabled) colors.success.copy(alpha = 0.15f)
+                                else colors.primary.copy(alpha = 0.15f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Build,
+                            contentDescription = null,
+                            tint = if (settings.remoteControlEnabled) colors.success else colors.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "受控模式",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textPrimary
+                        )
+                        Text(
+                            text = if (settings.remoteControlEnabled) "已开启，电脑端可远程控制" else "允许电脑端 MoFox 远程控制手机",
+                            fontSize = 13.sp,
+                            color = if (settings.remoteControlEnabled) colors.success else colors.textSecondary,
+                            maxLines = 1
+                        )
+                    }
+                    Switch(
+                        checked = settings.remoteControlEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
+                                showRemoteControlWarningDialog = true
+                            } else {
+                                onUpdateRemoteControlEnabled(false)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = colors.success,
+                            checkedTrackColor = colors.success.copy(alpha = 0.5f),
+                            uncheckedThumbColor = colors.textHint,
+                            uncheckedTrackColor = colors.backgroundInput
+                        )
+                    )
+                }
+            }
+        }
+
+        // 端口设置（仅在受控模式开启时显示）
+        if (settings.remoteControlEnabled) {
+            item {
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "服务端口",
+                    subtitle = "${settings.serverPort}",
+                    onClick = { showServerPortDialog = true }
+                )
+            }
+
+            // 鉴权 Token 设置
+            item {
+                SettingsItem(
+                    icon = Icons.Default.Lock,
+                    title = "鉴权 Token",
+                    subtitle = if (settings.serverToken.isNotEmpty()) "已设置 (${maskApiKey(settings.serverToken)})" else "未设置（不鉴权）",
+                    onClick = { showServerTokenDialog = true }
+                )
+            }
+        }
+
         // 反馈分组
         item {
             SettingsSection(title = "反馈与调试")
@@ -654,6 +754,41 @@ fun SettingsScreen(
             onConfirm = {
                 onUpdateSuCommandEnabled(true)
                 showSuCommandWarningDialog = false
+            }
+        )
+    }
+
+    // 受控模式警告对话框
+    if (showRemoteControlWarningDialog) {
+        RemoteControlWarningDialog(
+            onDismiss = { showRemoteControlWarningDialog = false },
+            onConfirm = {
+                onUpdateRemoteControlEnabled(true)
+                showRemoteControlWarningDialog = false
+            }
+        )
+    }
+
+    // 服务端口设置对话框
+    if (showServerPortDialog) {
+        ServerPortDialog(
+            currentPort = settings.serverPort,
+            onDismiss = { showServerPortDialog = false },
+            onConfirm = {
+                onUpdateServerPort(it)
+                showServerPortDialog = false
+            }
+        )
+    }
+
+    // 鉴权 Token 设置对话框
+    if (showServerTokenDialog) {
+        ServerTokenDialog(
+            currentToken = settings.serverToken,
+            onDismiss = { showServerTokenDialog = false },
+            onConfirm = {
+                onUpdateServerToken(it)
+                showServerTokenDialog = false
             }
         )
     }
@@ -1869,4 +2004,240 @@ fun SuCommandWarningDialog(
             }
         }
     )
+}
+
+/**
+ * 受控模式警告对话框
+ */
+@Composable
+fun RemoteControlWarningDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    val colors = BaoziTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.backgroundCard,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                "启用受控模式",
+                color = colors.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "受控模式将在手机上启动一个 HTTP Server，允许电脑端的 MoFox 通过局域网远程控制本手机执行点击、滑动、输入等操作。",
+                    fontSize = 14.sp,
+                    color = colors.textPrimary,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Text(
+                    text = "注意事项：",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                BulletPoint("手机与电脑需在同一局域网")
+                BulletPoint("建议设置鉴权 Token 防止未授权访问")
+                BulletPoint("服务运行期间会显示常驻通知")
+                BulletPoint("仅在可信网络环境下启用")
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "开启后可在下方设置端口和鉴权 Token。",
+                    fontSize = 13.sp,
+                    color = colors.textSecondary
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+            ) {
+                Text("了解，启用", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", color = colors.textSecondary)
+            }
+        }
+    )
+}
+
+/**
+ * 服务端口设置对话框
+ */
+@Composable
+fun ServerPortDialog(
+    currentPort: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    val colors = BaoziTheme.colors
+    var portText by remember { mutableStateOf(currentPort.toString()) }
+    val parsedPort = portText.toIntOrNull()
+    val isValid = parsedPort != null && parsedPort in 1024..65535
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.backgroundCard,
+        title = {
+            Text("服务端口", color = colors.textPrimary)
+        },
+        text = {
+            Column {
+                Text(
+                    text = "HTTP Server 监听端口（1024-65535）",
+                    fontSize = 14.sp,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.backgroundInput)
+                        .padding(4.dp)
+                ) {
+                    BasicTextField(
+                        value = portText,
+                        onValueChange = { portText = it.filter { c -> c.isDigit() } },
+                        textStyle = TextStyle(
+                            color = colors.textPrimary,
+                            fontSize = 14.sp
+                        ),
+                        cursorBrush = SolidColor(colors.primary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp)
+                    )
+                }
+                if (!isValid && portText.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "端口必须在 1024-65535 之间",
+                        fontSize = 12.sp,
+                        color = colors.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(parsedPort ?: currentPort) },
+                enabled = isValid
+            ) {
+                Text("确定", color = if (isValid) colors.primary else colors.textHint)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", color = colors.textSecondary)
+            }
+        }
+    )
+}
+
+/**
+ * 鉴权 Token 设置对话框
+ */
+@Composable
+fun ServerTokenDialog(
+    currentToken: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    val colors = BaoziTheme.colors
+    var token by remember { mutableStateOf(currentToken) }
+    var showToken by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.backgroundCard,
+        title = {
+            Text("鉴权 Token", color = colors.textPrimary)
+        },
+        text = {
+            Column {
+                Text(
+                    text = "设置后，电脑端请求需携带 Authorization: Bearer <Token>。留空表示不鉴权（不推荐）。",
+                    fontSize = 13.sp,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.backgroundInput)
+                        .padding(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BasicTextField(
+                            value = token,
+                            onValueChange = { token = it },
+                            textStyle = TextStyle(
+                                color = colors.textPrimary,
+                                fontSize = 14.sp
+                            ),
+                            cursorBrush = SolidColor(colors.primary),
+                            visualTransformation = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(12.dp)
+                        )
+                        TextButton(onClick = { showToken = !showToken }) {
+                            Text(
+                                text = if (showToken) "隐藏" else "显示",
+                                fontSize = 12.sp,
+                                color = colors.textHint
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(onClick = {
+                    token = generateRandomToken()
+                }) {
+                    Text(
+                        text = "随机生成",
+                        fontSize = 12.sp,
+                        color = colors.primary
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(token.trim()) }) {
+                Text("确定", color = colors.primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", color = colors.textSecondary)
+            }
+        }
+    )
+}
+
+/**
+ * 生成随机 Token（32 位十六进制）
+ */
+private fun generateRandomToken(): String {
+    val chars = "0123456789abcdef"
+    return (1..32).map { chars.random() }.joinToString("")
 }

@@ -30,6 +30,7 @@ import com.roubao.autopilot.agent.MobileAgent
 import com.roubao.autopilot.controller.AppScanner
 import com.roubao.autopilot.controller.DeviceController
 import com.roubao.autopilot.data.*
+import com.roubao.autopilot.server.HttpServerService
 import com.roubao.autopilot.ui.screens.*
 import com.roubao.autopilot.ui.theme.*
 import androidx.compose.ui.graphics.toArgb
@@ -201,6 +202,15 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // 受控模式：随 remoteControlEnabled / serverPort 变化启停 HTTP Server
+        LaunchedEffect(settings.remoteControlEnabled, settings.serverPort) {
+            if (settings.remoteControlEnabled) {
+                HttpServerService.startIfEnabled(this@MainActivity)
+            } else {
+                HttpServerService.stop(this@MainActivity)
+            }
+        }
+
         Scaffold(
             modifier = Modifier.background(colors.background),
             containerColor = colors.background,
@@ -311,6 +321,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onUpdateRootModeEnabled = { settingsManager.updateRootModeEnabled(it) },
                                 onUpdateSuCommandEnabled = { settingsManager.updateSuCommandEnabled(it) },
+                                onUpdateRemoteControlEnabled = { settingsManager.updateRemoteControlEnabled(it) },
+                                onUpdateServerPort = { settingsManager.updateServerPort(it) },
+                                onUpdateServerToken = { settingsManager.updateServerToken(it) },
                                 onSelectProvider = { settingsManager.selectProvider(it) },
                                 shizukuAvailable = isShizukuAvailable,
                                 shizukuPrivilegeLevel = if (isShizukuAvailable) {
