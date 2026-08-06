@@ -33,7 +33,9 @@ class DeviceController(private val context: Context? = null) {
         private const val SCREENSHOT_PATH = "/data/local/tmp/autopilot_screen.png"
     }
 
+    @Volatile
     private var shellService: IShellService? = null
+    @Volatile
     private var serviceBound = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private val clipboardManager: ClipboardManager? by lazy {
@@ -55,13 +57,11 @@ class DeviceController(private val context: Context? = null) {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             shellService = IShellService.Stub.asInterface(service)
             serviceBound = true
-            println("[DeviceController] ShellService connected")
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             shellService = null
             serviceBound = false
-            println("[DeviceController] ShellService disconnected")
         }
     }
 

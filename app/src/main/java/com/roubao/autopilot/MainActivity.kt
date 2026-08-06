@@ -110,7 +110,9 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
 
-        deviceController = DeviceController(this)
+        // 复用 App 单例的 DeviceController（与 ToolManager 共用同一实例，
+        // 确保 Shizuku UserService 绑定状态在 App 各处一致）
+        deviceController = App.getInstance().deviceController
         deviceController.setCacheDir(cacheDir)
         settingsManager = SettingsManager(this)
         executionRepository = ExecutionRepository(this)

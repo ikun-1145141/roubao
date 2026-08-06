@@ -45,8 +45,8 @@ class DeviceHandler {
      * 获取剪贴板（GET，无 body）
      */
     suspend fun getClipboard(@Suppress("UNUSED_PARAMETER") session: NanoHTTPD.IHTTPSession): Any {
-        // 走 clipboard tool，无参数
-        val result = ToolManager.getInstance().execute("clipboard", emptyMap())
+        // clipboard tool 需要 action=read
+        val result = ToolManager.getInstance().execute("clipboard", mapOf("action" to "read"))
         return result
     }
 }
