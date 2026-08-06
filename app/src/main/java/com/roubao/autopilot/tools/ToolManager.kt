@@ -30,6 +30,24 @@ class ToolManager private constructor(
     lateinit var httpTool: HttpTool
         private set
 
+    // 设备控制类工具（远程受控模式新增）
+    lateinit var tapTool: TapTool
+        private set
+    lateinit var longPressTool: LongPressTool
+        private set
+    lateinit var doubleTapTool: DoubleTapTool
+        private set
+    lateinit var swipeTool: SwipeTool
+        private set
+    lateinit var inputTool: InputTool
+        private set
+    lateinit var keyTool: KeyTool
+        private set
+    lateinit var screenshotTool: ScreenshotTool
+        private set
+    lateinit var getCurrentAppTool: GetCurrentAppTool
+        private set
+
     /**
      * 初始化所有工具
      */
@@ -42,6 +60,16 @@ class ToolManager private constructor(
         shellTool = ShellTool(deviceController)
         httpTool = HttpTool()
 
+        // 设备控制类工具
+        tapTool = TapTool(deviceController)
+        longPressTool = LongPressTool(deviceController)
+        doubleTapTool = DoubleTapTool(deviceController)
+        swipeTool = SwipeTool(deviceController)
+        inputTool = InputTool(deviceController)
+        keyTool = KeyTool(deviceController)
+        screenshotTool = ScreenshotTool(deviceController)
+        getCurrentAppTool = GetCurrentAppTool(deviceController)
+
         // 注册到全局 Registry
         ToolRegistry.register(searchAppsTool)
         ToolRegistry.register(openAppTool)
@@ -49,6 +77,14 @@ class ToolManager private constructor(
         ToolRegistry.register(deepLinkTool)
         ToolRegistry.register(shellTool)
         ToolRegistry.register(httpTool)
+        ToolRegistry.register(tapTool)
+        ToolRegistry.register(longPressTool)
+        ToolRegistry.register(doubleTapTool)
+        ToolRegistry.register(swipeTool)
+        ToolRegistry.register(inputTool)
+        ToolRegistry.register(keyTool)
+        ToolRegistry.register(screenshotTool)
+        ToolRegistry.register(getCurrentAppTool)
 
         println("[ToolManager] 已初始化 ${ToolRegistry.getAll().size} 个工具")
     }
@@ -73,6 +109,21 @@ class ToolManager private constructor(
     fun getAvailableTools(): List<Tool> {
         return ToolRegistry.getAll()
     }
+
+    /**
+     * 获取 DeviceController（供 server 模块查询设备状态用）
+     */
+    fun getDeviceController(): DeviceController = deviceController
+
+    /**
+     * 获取 AppScanner
+     */
+    fun getAppScanner(): AppScanner = appScanner
+
+    /**
+     * 获取 Context
+     */
+    fun getContext(): Context = context
 
     companion object {
         @Volatile

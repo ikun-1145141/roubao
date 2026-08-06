@@ -87,6 +87,9 @@ dependencies {
     // JSON
     implementation("org.json:json:20231013")
 
+    // NanoHTTPD - 本地 HTTP Server（远程受控模式）
+    implementation("org.nanohttpd:nanohttpd:2.3.1")
+
     // Firebase Crashlytics
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-crashlytics")

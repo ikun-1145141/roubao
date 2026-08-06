@@ -107,6 +107,16 @@
                 android:value="automation_overlay" />
         </service>
 
+        <!-- HTTP 受控服务（远程控制 API Server） -->
+        <service
+            android:name=".server.HttpServerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="remote_control_http_server" />
+        </service>
+
     </application>
 
 </manifest>

@@ -87,7 +87,11 @@ data class AppSettings(
     val maxSteps: Int = 25,
     val cloudCrashReportEnabled: Boolean = true,
     val rootModeEnabled: Boolean = false,
-    val suCommandEnabled: Boolean = false
+    val suCommandEnabled: Boolean = false,
+    // 远程受控模式（HTTP Server）
+    val remoteControlEnabled: Boolean = false,
+    val serverPort: Int = 8765,
+    val serverToken: String = ""  // 鉴权 Token，空表示不鉴权
 ) {
     // 便捷属性：获取当前服务商的配置
     val currentConfig: ProviderConfig
@@ -224,7 +228,10 @@ class SettingsManager(context: Context) {
             maxSteps = prefs.getInt("max_steps", 25),
             cloudCrashReportEnabled = prefs.getBoolean("cloud_crash_report_enabled", true),
             rootModeEnabled = prefs.getBoolean("root_mode_enabled", false),
-            suCommandEnabled = prefs.getBoolean("su_command_enabled", false)
+            suCommandEnabled = prefs.getBoolean("su_command_enabled", false),
+            remoteControlEnabled = prefs.getBoolean("remote_control_enabled", false),
+            serverPort = prefs.getInt("server_port", 8765),
+            serverToken = securePrefs.getString("server_token", "") ?: ""
         )
     }
 
@@ -355,5 +362,30 @@ class SettingsManager(context: Context) {
     fun updateSuCommandEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("su_command_enabled", enabled).apply()
         _settings.value = _settings.value.copy(suCommandEnabled = enabled)
+    }
+
+    /**
+     * 更新远程受控模式开关
+     */
+    fun updateRemoteControlEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("remote_control_enabled", enabled).apply()
+        _settings.value = _settings.value.copy(remoteControlEnabled = enabled)
+    }
+
+    /**
+     * 更新服务端口
+     */
+    fun updateServerPort(port: Int) {
+        val validPort = port.coerceIn(1024, 65535)
+        prefs.edit().putInt("server_port", validPort).apply()
+        _settings.value = _settings.value.copy(serverPort = validPort)
+    }
+
+    /**
+     * 更新鉴权 Token（存入加密存储）
+     */
+    fun updateServerToken(token: String) {
+        securePrefs.edit().putString("server_token", token).apply()
+        _settings.value = _settings.value.copy(serverToken = token)
     }
 }

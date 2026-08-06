@@ -473,6 +473,48 @@ class DeviceController(private val context: Context? = null) {
     }
 
     /**
+     * 通用按键 - 支持 home/back/recent/enter/delete 等
+     * @param keyName 按键名（home/back/recent/enter/delete/menu/volume_up/volume_down/power）
+     */
+    fun key(keyName: String) {
+        val keycode = when (keyName.lowercase().trim()) {
+            "home" -> 3
+            "back" -> 4
+            "menu" -> 82
+            "recent", "app_switch" -> 187
+            "enter" -> 66
+            "delete", "backspace" -> 67
+            "volume_up" -> 24
+            "volume_down" -> 25
+            "mute", "volume_mute" -> 164
+            "power" -> 26
+            else -> {
+                println("[DeviceController] Unknown key: $keyName")
+                return
+            }
+        }
+        exec("input keyevent $keycode")
+    }
+
+    /**
+     * 获取当前前台应用包名
+     * @return 包名，获取失败返回空字符串
+     */
+    fun getCurrentApp(): String {
+        // Android 8+ 使用 dumpsys activity 获取
+        val output = exec("dumpsys activity activities | grep mResumedActivity")
+        // 输出格式: mResumedActivity: ActivityRecord{... u0 com.tencent.mm/.ui.LauncherUI ...}
+        val match = Regex("(\\b[a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_]+)+)/").find(output)
+        val pkg = match?.groupValues?.get(1) ?: ""
+        if (pkg.isNotEmpty()) return pkg
+
+        // 备选方案：mFocusedApp
+        val output2 = exec("dumpsys window | grep mFocusedApp")
+        val match2 = Regex("(\\b[a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_]+)+)/").find(output2)
+        return match2?.groupValues?.get(1) ?: ""
+    }
+
+    /**
      * 打开 App - 支持包名或应用名
      */
     fun openApp(appNameOrPackage: String) {
