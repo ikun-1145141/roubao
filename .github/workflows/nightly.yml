@@ -89,11 +89,25 @@ jobs:
       - name: List artifacts
         run: ls -lhR app/build/outputs/apk/
 
-      - name: Upload artifact
+      - name: Build MoFox plugin packages (.mfp)
+        run: python scripts/build_mfp.py --output dist
+
+      - name: List plugin packages
+        run: ls -lh dist/
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: roubao-${{ env.FLAVOR }}-${{ github.run_number }}
           path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload plugin artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: roubao-plugins-${{ github.run_number }}
+          path: dist/*.mfp
           if-no-files-found: error
           retention-days: 14
 
@@ -110,6 +124,13 @@ jobs:
         with:
           path: dist
           pattern: roubao-${{ env.FLAVOR }}-*-${{ github.run_number }}
+          merge-multiple: true
+
+      - name: Download plugin artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: roubao-plugins-${{ github.run_number }}
           merge-multiple: true
 
       - name: List release files
@@ -145,13 +166,20 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: "Nightly Build #${{ github.run_number }}"
           body: |
-            自动构建的 nightly APK。
+            自动构建的 nightly 产物。
 
+            **Android APK**
             - Commit: `${{ github.sha }}`
             - Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - Flavor: `${{ env.FLAVOR }}`
 
+            **MoFox 插件 (.mfp)**
+            - `phone_adapter-*.mfp`：肉包手机适配器（连接管理）
+            - `phone_tool-*.mfp`：手机控制工具（LLM 可调用）
+
             > nightly tag 每次定时构建都会重建，仅作最新预览，不保证稳定性。
-          files: dist/*.apk
+          files: |
+            dist/*.apk
+            dist/*.mfp
           prerelease: true
           make_latest: false

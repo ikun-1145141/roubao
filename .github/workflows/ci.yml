@@ -75,10 +75,24 @@ jobs:
       - name: List artifacts
         run: ls -lh app/build/outputs/apk/debug/
 
-      - name: Upload artifact
+      - name: Build MoFox plugin packages (.mfp)
+        run: python scripts/build_mfp.py --output dist
+
+      - name: List plugin packages
+        run: ls -lh dist/
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: roubao-debug-${{ github.run_number }}-${{ github.sha }}
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload plugin artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: roubao-plugins-${{ github.run_number }}-${{ github.sha }}
+          path: dist/*.mfp
           if-no-files-found: error
           retention-days: 14
