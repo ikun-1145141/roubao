@@ -127,24 +127,21 @@ class ShellTool(
     }
 
     /**
-     * 执行命令
-     * 注意：这里需要扩展 DeviceController 或使用反射
-     * 暂时使用简化实现
+     * 执行命令（通过 Shizuku，具备 shell/root 权限）
      */
     private fun executeCommand(command: String): String {
-        return try {
-            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
-            val output = process.inputStream.bufferedReader().readText()
-            val error = process.errorStream.bufferedReader().readText()
-            process.waitFor()
-
-            if (error.isNotBlank()) {
-                "Output: $output\nError: $error"
-            } else {
-                output
+        val result = deviceController.execShell(command)
+        return buildString {
+            if (result.stdout.isNotEmpty()) {
+                append(result.stdout)
             }
-        } catch (e: Exception) {
-            "Error: ${e.message}"
+            if (result.stderr.isNotEmpty()) {
+                if (isNotEmpty()) append("\n")
+                append("Error: ").append(result.stderr)
+            }
+            // 末尾附 exit code 便于调用方判断
+            if (isNotEmpty()) append("\n")
+            append("[exit: ${result.exitCode}]")
         }
     }
 }

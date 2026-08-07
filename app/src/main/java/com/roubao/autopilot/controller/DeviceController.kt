@@ -169,6 +169,78 @@ class DeviceController(private val context: Context? = null) {
     }
 
     /**
+     * 执行 shell 命令并返回完整结果（stdout + stderr + exit code）
+     *
+     * 优先通过 Shizuku 执行（具备 shell/root 权限），
+     * 不可用时回退到本地无权限执行。
+     *
+     * @param command 要执行的 shell 命令
+     * @return 三元组：stdout、stderr、exitCode
+     */
+    fun execShell(command: String): ShellResult {
+        // 优先走 Shizuku
+        if (isAvailable()) {
+            return try {
+                // Shizuku UserService exec 默认返回 stdout；
+                // 用 "command; echo __EXIT__:$?" 同时取 exit code，stderr 重定向到 stdout 合并输出
+                val wrapped = "($command) 2>&1; echo \"__EXIT__:\$?\""
+                val service = shellService
+                if (service != null) {
+                    parseShellResult(service.exec(wrapped))
+                } else {
+                    execShellLocal(command)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // 降级到本地
+                execShellLocal(command)
+            }
+        }
+        return execShellLocal(command)
+    }
+
+    /**
+     * 本地无权限执行（回退方案）
+     */
+    private fun execShellLocal(command: String): ShellResult {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
+            val stdout = process.inputStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+            ShellResult(stdout = stdout, stderr = stderr, exitCode = exitCode)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ShellResult(stdout = "", stderr = e.message ?: "unknown error", exitCode = -1)
+        }
+    }
+
+    /**
+     * 解析 Shizuku exec 返回的合并输出，拆出 stdout 与 exitCode
+     */
+    private fun parseShellResult(raw: String): ShellResult {
+        // 末尾的 __EXIT__:<code> 是我们追加的标记
+        val marker = "__EXIT__:"
+        val markerIdx = raw.lastIndexOf(marker)
+        return if (markerIdx >= 0) {
+            val exitCode = raw.substring(markerIdx + marker.length).trim().toIntOrNull() ?: -1
+            val stdout = raw.substring(0, markerIdx).trimEnd()
+            ShellResult(stdout = stdout, stderr = "", exitCode = exitCode)
+        } else {
+            ShellResult(stdout = raw, stderr = "", exitCode = -1)
+        }
+    }
+
+    /**
+     * Shell 执行结果
+     */
+    data class ShellResult(
+        val stdout: String,
+        val stderr: String,
+        val exitCode: Int
+    )
+
+    /**
      * 点击屏幕
      */
     fun tap(x: Int, y: Int) {

@@ -43,6 +43,8 @@ object ErrorCode {
     const val TOOL_NOT_FOUND = "TOOL_NOT_FOUND"
     const val TOOL_EXECUTION_FAILED = "TOOL_EXECUTION_FAILED"
     const val SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+    const val RATE_LIMITED = "RATE_LIMITED"
+    const val DEVICE_BUSY = "DEVICE_BUSY"
 }
 
 /**

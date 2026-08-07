@@ -1,6 +1,7 @@
 package com.roubao.autopilot.server.handlers
 
 import android.os.Build
+import com.roubao.autopilot.server.ServerMetrics
 import com.roubao.autopilot.tools.ToolManager
 
 /**
@@ -48,7 +49,8 @@ class SystemHandler {
                 false
             },
             "tools_initialized" to true,
-            "server_time" to System.currentTimeMillis()
+            "server_time" to System.currentTimeMillis(),
+            "metrics" to ServerMetrics.toMap()
         )
     }
 

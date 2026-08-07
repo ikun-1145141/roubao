@@ -33,10 +33,15 @@ class DeviceHandler {
     }
 
     /**
-     * 截图
+     * 截图（GET，参数从 query 取）
+     *
+     * 支持 query 参数：format、quality、scale（与 ScreenshotTool 的参数对齐）
      */
     suspend fun screenshot(session: NanoHTTPD.IHTTPSession): Any {
-        val params = RequestParser.parseJsonBody(session)
+        val params = mutableMapOf<String, Any?>()
+        RequestParser.queryParam(session, "format")?.let { params["format"] = it }
+        RequestParser.queryParam(session, "quality")?.toIntOrNull()?.let { params["quality"] = it }
+        RequestParser.queryParam(session, "scale")?.toFloatOrNull()?.let { params["scale"] = it }
         val result = ToolManager.getInstance().execute("screenshot", params)
         return result
     }
