@@ -66,7 +66,8 @@ captures/
 .cxx/
 
 # Google Services (e.g. APIs or Firebase)
-google-services.json
+# 注意：本项目 google-services.json 为占位符（无真实密钥），已强制入库供 CI 使用
+#google-services.json
 
 # Freeline
 freeline.py
