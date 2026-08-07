@@ -35,6 +35,42 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Configure repositories for CI
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/init.gradle <<'EOF'
+          // CI 环境：官方仓库优先，阿里云镜像兜底
+          // 避免 GitHub runner（美国）访问阿里云不稳定导致插件解析失败
+          allprojects {
+            buildscript {
+              repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+              }
+            }
+            repositories {
+              google()
+              mavenCentral()
+              gradlePluginPortal()
+              maven { url 'https://maven.aliyun.com/repository/public' }
+              maven { url 'https://maven.aliyun.com/repository/google' }
+              maven { url 'https://jitpack.io' }
+            }
+          }
+          settingsEvaluated { settings ->
+            settings.pluginManagement {
+              repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+                maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+                maven { url 'https://maven.aliyun.com/repository/public' }
+              }
+            }
+          }
+          EOF
+
       - name: Show toolchain
         run: |
           java -version
