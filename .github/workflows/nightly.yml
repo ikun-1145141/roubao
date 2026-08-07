@@ -50,33 +50,26 @@ jobs:
           cat > ~/.gradle/init.gradle <<'EOF'
           // CI 环境：官方仓库优先，阿里云镜像兜底
           // 避免 GitHub runner（美国）访问阿里云不稳定导致插件解析失败
-          allprojects {
-            buildscript {
-              repositories {
-                google()
-                mavenCentral()
-                gradlePluginPortal()
+          // 注意：项目设了 FAIL_ON_PROJECT_REPOS，所以只改 settings 级仓库，不碰 project 级
+          beforeSettings { settings ->
+              settings.pluginManagement {
+                  repositories {
+                      google()
+                      mavenCentral()
+                      gradlePluginPortal()
+                      maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+                      maven { url 'https://maven.aliyun.com/repository/public' }
+                  }
               }
-            }
-            repositories {
-              google()
-              mavenCentral()
-              gradlePluginPortal()
-              maven { url 'https://maven.aliyun.com/repository/public' }
-              maven { url 'https://maven.aliyun.com/repository/google' }
-              maven { url 'https://jitpack.io' }
-            }
-          }
-          settingsEvaluated { settings ->
-            settings.pluginManagement {
-              repositories {
-                google()
-                mavenCentral()
-                gradlePluginPortal()
-                maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-                maven { url 'https://maven.aliyun.com/repository/public' }
+              settings.dependencyResolutionManagement {
+                  repositories {
+                      google()
+                      mavenCentral()
+                      maven { url 'https://maven.aliyun.com/repository/public' }
+                      maven { url 'https://maven.aliyun.com/repository/google' }
+                      maven { url 'https://jitpack.io' }
+                  }
               }
-            }
           }
           EOF
 
