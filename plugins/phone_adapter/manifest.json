@@ -1,0 +1,28 @@
+{
+    "name": "phone_adapter",
+    "display_name": "肉包手机适配器",
+    "version": "0.1.0",
+    "description": "连接肉包手机端 HTTP API，提供连接管理、鉴权与心跳",
+    "author": "Roubao Team",
+    "dependencies": {
+        "plugins": [],
+        "components": []
+    },
+    "include": [
+        {
+            "component_type": "adapter",
+            "component_name": "phone_adapter",
+            "dependencies": []
+        }
+    ],
+    "entry_point": "plugin.py",
+    "min_core_version": "1.2.0-rc.2",
+    "api_version": {
+        "adapter_api": "1.0.0",
+        "log_api": "1.0.0"
+    },
+    "python_dependencies": [
+        "httpx>=0.27.0"
+    ],
+    "dependencies_required": true
+}

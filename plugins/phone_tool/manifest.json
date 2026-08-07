@@ -1,0 +1,34 @@
+{
+    "name": "phone_tool",
+    "display_name": "手机控制工具",
+    "version": "0.1.0",
+    "description": "把肉包手机的截图、点击、输入等能力暴露给 LLM 调用",
+    "author": "Roubao Team",
+    "dependencies": {
+        "plugins": ["phone_adapter"],
+        "components": []
+    },
+    "include": [
+        {"component_type": "tool", "component_name": "phone_screenshot", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_tap", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_double_tap", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_long_press", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_swipe", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_input_text", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_key", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_clipboard", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_search_apps", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_open_app", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_deep_link", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_current_app", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_status", "dependencies": []},
+        {"component_type": "tool", "component_name": "phone_shell", "dependencies": []}
+    ],
+    "entry_point": "plugin.py",
+    "min_core_version": "1.2.0-rc.2",
+    "api_version": {
+        "adapter_api": "1.0.0",
+        "log_api": "1.0.0"
+    },
+    "dependencies_required": true
+}
